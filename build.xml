@@ -1,0 +1,53 @@
+<project default="compile">
+
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="dist.dir"  location="dist"/>
+    <property name="doc.dir"  location="doc"/>
+
+    <path id="project.class.path">
+        <pathelement path="${classpath}"/>
+        <pathelement path="${build}"/>
+    </path>
+
+    <target name="clean">
+        <delete dir="${build}"/>
+        <delete dir="${dist.dir}"/>
+        <delete dir="${doc.dir}"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="${build}"/>
+        <javac srcdir="${src}" destdir="${build}" includeantruntime="false">
+            <classpath refid="project.class.path"/>
+        </javac>
+        <copy todir="build/res">
+           <fileset dir="res"/>
+        </copy>
+    </target>
+
+    <target name="run" depends="compile">
+        <java classname="de.fischl.ispnub.Creator" fork="true">
+            <classpath refid="project.class.path"/>
+        </java>
+    </target>
+
+    <target name="doc">
+        <delete dir="${doc.dir}"/>
+        <mkdir dir="${doc.dir}"/>
+        <javadoc sourcepath="${src}" destdir="${doc.dir}" packagenames="de.fischl.ispnub" >
+            <classpath refid="project.class.path"/>
+        </javadoc>
+    </target>
+
+    <target name="jar" depends="compile">
+        <mkdir dir="${dist.dir}"/>
+        <jar destfile="${dist.dir}/ISPnubCreator.jar" basedir="${build}">
+            <manifest>
+                <attribute name="Main-Class" value="de.fischl.ispnub.Creator"/>
+            </manifest>
+        </jar>
+    </target>
+
+</project>
+
