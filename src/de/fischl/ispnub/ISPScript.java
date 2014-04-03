@@ -75,6 +75,7 @@ public class ISPScript {
 
             lineno++;
 
+            if (line.split(";").length == 0) continue;
             String linehead = line.split(";")[0].trim();
             if (linehead.equals("")) continue;
 
