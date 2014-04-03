@@ -26,7 +26,7 @@ public class Creator {
 
     public static final int SCRIPT_STARTADDRESS = 0x1000;
     public static final int UC_MEMORY_SIZE = 128 * 1024;
-    public static String VERSION = "1.0";
+    public static String VERSION = "1.1";
     
     public static void main(String[] args) throws IOException {
 
