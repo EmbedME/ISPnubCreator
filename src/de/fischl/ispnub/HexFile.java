@@ -25,6 +25,7 @@ public class HexFile {
 
     public static final int RECORD_TYPE_DATA = 0x00;
     public static final int RECORD_TYPE_EOF = 0x01;
+    public static final int RECORD_TYPE_EXT_SEGMENT_ADDRESS = 0x02;
     public static final int RECORD_TYPE_EXT_LINEAR_ADDRESS = 0x04;
     public static final int RADIX = 16;
 
@@ -35,6 +36,7 @@ public class HexFile {
         String record;
         int lineNum = 0;
         int extendedAddress = 0;
+        int segmentAddress = 0;
         int endAddress = 0;
 
         while ((record = br.readLine()) != null) {
@@ -57,8 +59,8 @@ public class HexFile {
 
                     for (int i = 0; i < dataLength; i++) {
                         byte value = (byte) (Integer.parseInt(record.substring(i * 2 + 9, (i * 2 + 11)), RADIX));
-                        membuffer[offset + address + extendedAddress] = value;
-                        if (address + extendedAddress > endAddress) endAddress = address + extendedAddress;
+                        membuffer[offset + address + extendedAddress + segmentAddress] = value;
+                        if (address + extendedAddress + segmentAddress > endAddress) endAddress = address + extendedAddress + segmentAddress;
                         address++;
                     }
 
@@ -68,6 +70,9 @@ public class HexFile {
                 case RECORD_TYPE_EXT_LINEAR_ADDRESS:
 
 		    extendedAddress = Integer.parseInt(record.substring(9, 13), 16) << 16;
+                    break;
+                case RECORD_TYPE_EXT_SEGMENT_ADDRESS:
+       		    segmentAddress = Integer.parseInt(record.substring(9, 13), 16) << 4;
                     break;
                 default:
                     System.err.println("Unknown record type in line " + lineNum);
