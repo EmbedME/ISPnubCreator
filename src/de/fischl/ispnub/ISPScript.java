@@ -1,6 +1,7 @@
 package de.fischl.ispnub;
 
 import java.io.*;
+import java.util.Arrays;
 
 /**
  * ISPnub script parser
@@ -30,6 +31,7 @@ public class ISPScript {
     public static final byte CMD_FLASH = 0x05;
     public static final byte CMD_WAIT = 0x06;
     public static final byte CMD_DECCOUNTER = 0x07;
+    public static final byte CMD_EEPROM = 0x08;
     public static final byte CMD_END = (byte)0xff;
 
     public static final int[] SCK_OPTIONS = {2000000, 500000, 125000, 62500, 4000000, 1000000, 250000};
@@ -112,24 +114,49 @@ public class ISPScript {
                     mem[pos++] = (byte)(getIntVal(parameters[4]));
                     break;
                 case "FLASH":
+                case "EEPROM":
                     String filename = parameters[0].trim();
                     int pagesize = getIntVal(parameters[2]);
                     int startaddress = getIntVal(parameters[1]);
-                    mem[pos++] = CMD_FLASH;
-                    mem[pos++] = (byte)((startaddress >> 24) & 0xff);
-                    mem[pos++] = (byte)((startaddress >> 16) & 0xff);
-                    mem[pos++] = (byte)((startaddress >> 8) & 0xff);
-                    mem[pos++] = (byte)((startaddress) & 0xff);
-                    int lenpos = pos;
-                    pos += 4;
-                    mem[pos++] = (byte)((pagesize >> 8) & 0xff);
-                    mem[pos++] = (byte)(pagesize & 0xff);
-                    int length = HexFile.read(new FileReader(filename), mem, pos);
-                    mem[lenpos++] = (byte)((length >> 24) & 0xff);
-                    mem[lenpos++] = (byte)((length >> 16) & 0xff);
-                    mem[lenpos++] = (byte)((length >> 8) & 0xff);
-                    mem[lenpos++] = (byte)((length) & 0xff);
-                    pos += length;
+                    int blanksize = 64;
+                    if (pagesize * 2 > blanksize) blanksize = pagesize * 2;
+                    
+                    byte[] hexmem = new byte[Creator.UC_MEMORY_SIZE];
+                    Arrays.fill(hexmem, (byte)0xff);
+
+                    int length = HexFile.read(new FileReader(filename), hexmem, 0);
+                    
+                    BinDataBlock block = new BinDataBlock(hexmem, length, blanksize);
+                    
+                    while (block.getNextBlock()) {
+                        
+                        /*
+                        System.out.println("Block");
+                        System.out.println("  first: " + block.getFirst());
+                        System.out.println("  last: " + block.getLast());
+                        System.out.println("  length: " + block.getLength());                    
+                        */
+                    
+                        if (cmd.equals("FLASH")) {
+                            mem[pos++] = CMD_FLASH;
+                        } else {
+                            mem[pos++] = CMD_EEPROM;
+                        }
+                        mem[pos++] = (byte)((startaddress + block.getFirst() >> 24) & 0xff);
+                        mem[pos++] = (byte)((startaddress + block.getFirst() >> 16) & 0xff);
+                        mem[pos++] = (byte)((startaddress + block.getFirst() >> 8) & 0xff);
+                        mem[pos++] = (byte)((startaddress + block.getFirst()) & 0xff);
+                        mem[pos++] = (byte)((block.getLength() >> 24) & 0xff);
+                        mem[pos++] = (byte)((block.getLength() >> 16) & 0xff);
+                        mem[pos++] = (byte)((block.getLength() >> 8) & 0xff);
+                        mem[pos++] = (byte)((block.getLength()) & 0xff);
+                        mem[pos++] = (byte)((pagesize >> 8) & 0xff);
+                        mem[pos++] = (byte)(pagesize & 0xff);
+
+                        System.arraycopy(hexmem, block.getFirst(), mem, pos, block.getLength());
+                        
+                        pos += block.getLength();
+                    }
                     break;
                 case "WAIT":
                     mem[pos++] = CMD_WAIT;
