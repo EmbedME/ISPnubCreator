@@ -121,7 +121,7 @@ public class ISPScript {
                     int blanksize = 64;
                     if (pagesize * 2 > blanksize) blanksize = pagesize * 2;
                     
-                    byte[] hexmem = new byte[Creator.UC_MEMORY_SIZE];
+                    byte[] hexmem = new byte[Creator.TARGET_MEMORY_SIZE];
                     Arrays.fill(hexmem, (byte)0xff);
 
                     int length = HexFile.read(new FileReader(filename), hexmem, 0);
